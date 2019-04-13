@@ -6,7 +6,7 @@ module.exports = {
 // This is the name of the action displayed in the editor.
 //---------------------------------------------------------------------
 
-name: "Find Channel",
+name: "Find Voice Channel",
 
 //---------------------------------------------------------------------
 // Action Section
@@ -23,8 +23,8 @@ section: "Channel Control",
 //---------------------------------------------------------------------
 
 subtitle: function(data) {
-	const info = ['Channel ID', 'Channel Name', 'Channel Topic'];
-	return `Find Channel by ${info[parseInt(data.info)]}`;
+	const info = ['Voice Channel ID', 'Voice Channel Name', 'Voice Channel Position', 'Voice Channel User Limit', 'Voice Channel Bitrate'];
+	return `Find Voice Channel by ${info[parseInt(data.info)]}`;
 },
 
 //---------------------------------------------------------------------
@@ -36,7 +36,7 @@ subtitle: function(data) {
 variableStorage: function(data, varType) {
 	const type = parseInt(data.storage);
 	if(type !== varType) return;
-	return ([data.varName, 'Channel']);
+	return ([data.varName, 'Voice Channel']);
 },
 
 //---------------------------------------------------------------------
@@ -71,9 +71,11 @@ html: function(isEvent, data) {
 	<div style="float: left; width: 40%;">
 		Source Field:<br>
 		<select id="info" class="round">
-			<option value="0" selected>Channel ID</option>
-			<option value="1">Channel Name</option>
-			<option value="2">Channel Topic</option>
+			<option value="0" selected>Voice Channel ID</option>
+			<option value="1">Voice Channel Name</option>
+			<option value="2">Voice Channel Position</option>
+			<option value="3">Voice Channel User Limit</option>
+			<option value="4">Voice Channel Bitrate</option>
 		</select>
 	</div>
 	<div style="float: right; width: 55%;">
@@ -124,7 +126,7 @@ action: function(cache) {
 	const info = parseInt(data.info);
 	const find = this.evalMessage(data.find, cache);
 	const channels = server.channels.filter(function(channel) {
-		return channel.type === 'text';
+		return channel.type === 'voice';
 	});
 	let result;
 	switch(info) {
@@ -135,7 +137,13 @@ action: function(cache) {
 			result = channels.find(element => element.name === find);
 			break;
 		case 2:
-			result = channels.find(element => element.topic === find);
+			result = channels.find(element => element.position === find);
+			break;
+		case 3:
+			result = channels.find(element => element.userLimit === find);
+			break;
+		case 4:
+			result = channels.find(element => element.bitrate === find);
 			break;
 		default:
 			break;

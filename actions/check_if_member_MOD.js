@@ -6,7 +6,7 @@ module.exports = {
 // This is the name of the action displayed in the editor.
 //---------------------------------------------------------------------
 
-name: "Check Member Data",
+name: "Check If Member",
 
 //---------------------------------------------------------------------
 // Action Section
@@ -14,7 +14,23 @@ name: "Check Member Data",
 // This is the section the action will fall into.
 //---------------------------------------------------------------------
 
-section: "Deprecated",
+section: "Conditions",
+
+//---------------------------------------------------------------------
+// DBM Mods Manager Variables (Optional but nice to have!)
+//
+// These are variables that DBM Mods Manager uses to show information
+// about the mods for people to see in the list.
+//---------------------------------------------------------------------
+
+// Who made the mod (If not set, defaults to "DBM Mods")
+author: "Lasse & MrGold",
+
+// The version of the mod (Defaults to 1.0.0)
+version: "1.9", //Added in 1.8.8
+
+// A short description to show on the mod line for this mod (Must be on a single line)
+short_description: "Check if a member meets the conditions.",
 
 //---------------------------------------------------------------------
 // Action Subtitle
@@ -27,22 +43,6 @@ subtitle: function(data) {
 	return `If True: ${results[parseInt(data.iftrue)]} ~ If False: ${results[parseInt(data.iffalse)]}`;
 },
 
-	//---------------------------------------------------------------------
-		 // DBM Mods Manager Variables (Optional but nice to have!)
-		 //
-		 // These are variables that DBM Mods Manager uses to show information
-		 // about the mods for people to see in the list.
-		 //---------------------------------------------------------------------
-	
-		 // Who made the mod (If not set, defaults to "DBM Mods")
-		 author: "DBM & NetLuis",
-	
-		 // The version of the mod (Defaults to 1.0.0)
-		 version: "1.9.4", //Added in 1.9.4
-	
-		 // A short description to show on the mod line for this mod (Must be on a single line)
-		 short_description: "Added more options to default action.",
-
 //---------------------------------------------------------------------
 // Action Fields
 //
@@ -51,67 +51,56 @@ subtitle: function(data) {
 // are also the names of the fields stored in the action's JSON data.
 //---------------------------------------------------------------------
 
-fields: ["member", "varName", "dataName", "comparison", "value", "iftrue", "iftrueVal", "iffalse", "iffalseVal"],
+fields: ["member", "varName", "info", "varName2", "iftrue", "iftrueVal", "iffalse", "iffalseVal"],
 
 //---------------------------------------------------------------------
 // Command HTML
 //
 // This function returns a string containing the HTML used for
-// editting actions. 
+// editting actions.
 //
 // The "isEvent" parameter will be true if this action is being used
-// for an event. Due to their nature, events lack certain information, 
+// for an event. Due to their nature, events lack certain information,
 // so edit the HTML to reflect this.
 //
-// The "data" parameter stores constants for select elements to use. 
+// The "data" parameter stores constants for select elements to use.
 // Each is an array: index 0 for commands, index 1 for events.
-// The names are: sendTargets, members, roles, channels, 
+// The names are: sendTargets, members, roles, channels,
 //                messages, servers, variables
 //---------------------------------------------------------------------
 
 html: function(isEvent, data) {
 	return `
-	<div><p>This action has been modified by DBM Mods.</p></div><br>
 <div>
 	<div style="float: left; width: 35%;">
-		Member:<br>
+		Source Member:<br>
 		<select id="member" class="round" onchange="glob.memberChange(this, 'varNameContainer')">
 			${data.members[isEvent ? 1 : 0]}
 		</select>
 	</div>
 	<div id="varNameContainer" style="display: none; float: right; width: 60%;">
 		Variable Name:<br>
-		<input id="varName" class="round" type="text" list="variableList">
+		<input id="varName" class="round" type="text" list="variableList"><br>
 	</div>
 </div><br><br><br>
 <div style="padding-top: 8px;">
-	<div style="float: left; width: 50%;">
-		Data Name:<br>
-		<input id="dataName" class="round" type="text">
-	</div>
-	<div style="float: left; width: 45%;">
-		Comparison Type:<br>
-		<select id="comparison" class="round">
-			<option value="0">Exists</option>
-			<option value="1" selected>Equals</option>
-			<option value="2">Equals Exactly</option>
-			<option value="3">Less Than</option>
-			<option value="4">Greater Than</option>
-			<option value="5">Includes</option>
-			<option value="6">Matches Regex</option>
-			<option value="7">Length is Bigger Than</option>
-			<option value="8">Length is Smaller Than</option>
-			<option value="9">Length Equals</option>
-			<option value="10">Starts With</option>
-			<option value="11">Ends With</option>
+	<div style="float: left; width: 35%;">
+		Check if Member:<br>
+		<select id="info" class="round">
+			<option value="0" selected>Is Bot</option>
+			<option value="2">Is Kickable</option>
+			<option value="1">Is Bannable</option>
+			<option value="4">Is In Voice Channel</option>
+			<option value="5">Is User Manageable?</option>
+      <option value="6">Is Bot Owner?</option>
 		</select>
 	</div>
+	<div id="varNameContainer2" style="display: none; float: right; width: 60%;">
+		Variable Name:<br>
+		<input id="varName2" class="round" type="text" list="variableList2"><br>
+	</div>
 </div><br><br><br>
 <div style="padding-top: 8px;">
-	Value to Compare to:<br>
-	<input id="value" class="round" type="text" name="is-eval">
-</div>
-<div style="padding-top: 16px;">
 	${data.conditions[0]}
 </div>`
 },
@@ -136,63 +125,56 @@ init: function() {
 // Action Bot Function
 //
 // This is the function for the action within the Bot's Action class.
-// Keep in mind event calls won't have access to the "msg" parameter, 
+// Keep in mind event calls won't have access to the "msg" parameter,
 // so be sure to provide checks for variable existance.
 //---------------------------------------------------------------------
 
 action: function(cache) {
 	const data = cache.actions[cache.index];
+
 	const type = parseInt(data.member);
 	const varName = this.evalMessage(data.varName, cache);
 	const member = this.getMember(type, varName, cache);
+
+	const type2 = parseInt(data.role);
+	const varName2 = this.evalMessage(data.varName2, cache);
+	const info = parseInt(data.info);
+	
+	const dibiem = this.getDBM();
+
 	let result = false;
-	if(member && member.data) {
-		const dataName = this.evalMessage(data.dataName, cache);
-		const val1 = member.data(dataName);
-		const compare = parseInt(data.comparison);
-		let val2 = this.evalMessage(data.value, cache);
-		if(compare !== 6) val2 = this.eval(val2, cache);
-		if(val2 === false) val2 = this.evalMessage(data.value, cache);
-		switch(compare) {
-			case 0:
-				result = Boolean(val1 !== undefined);
-				break;
-			case 1:
-				result = Boolean(val1 == val2);
-				break;
-			case 2:
-				result = Boolean(val1 === val2);
-				break;
-			case 3:
-				result = Boolean(val1 < val2);
-				break;
-			case 4:
-				result = Boolean(val1 > val2);
-				break;
-			case 5:
-				if(typeof(val1.includes) === 'function') {
-					result = Boolean(val1.includes(val2));
-				}
-				break;
-			case 6:
-				result = Boolean(val1.match(new RegExp('^' + val2 + '$', 'i')));
-				break;
-			case 7: // Case 7-11 Added by NetLuis
-				result = Boolean(val1.length > val2);
-				break;
-			case 8:
-				result = Boolean(val1.length < val2);
-				break;
-			case 9:
-			  result = Boolean(val1.length == val2);
-			  break;
-			case 10:
-			  result = val1.startsWith(val2);
-			  break;
-			case 11:
-			  result = val1.endsWith(val2);
-			  break;
-		}
+	switch(info) {
+		case 0:
+			result = Boolean(member.user.bot);
+			break;
+		case 1:
+			result = Boolean(member.bannable);
+			break;
+		case 2:
+			result = Boolean(member.kickable);
+			break;
+		// case 3:
+		// 	result = Boolean(member.speaking);
+		// 	break; //Do not ask me why this is not working... ~Lasse
+		case 4:
+			if(member.voiceChannelID !== undefined) {
+				result = true;
+			} else {
+				result = false;
+			}
+			break;
+		case 5:
+			result = member.manageable;
+			break;
+		case 6:
+			if(member.id == dibiem.Files.data.settings.ownerId) {
+				result = true;
+			} else {
+				result = false;
+			}
+			break;
+		default:
+			break;
 	}
 	this.executeResults(result, data, cache);
 },

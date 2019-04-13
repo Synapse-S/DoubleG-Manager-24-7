@@ -6,7 +6,7 @@ module.exports = {
 // This is the name of the action displayed in the editor.
 //---------------------------------------------------------------------
 
-name: "Find Channel",
+name: "Find Custom Emoji",
 
 //---------------------------------------------------------------------
 // Action Section
@@ -14,7 +14,7 @@ name: "Find Channel",
 // This is the section the action will fall into.
 //---------------------------------------------------------------------
 
-section: "Channel Control",
+section: "Emoji Control",
 
 //---------------------------------------------------------------------
 // Action Subtitle
@@ -23,8 +23,8 @@ section: "Channel Control",
 //---------------------------------------------------------------------
 
 subtitle: function(data) {
-	const info = ['Channel ID', 'Channel Name', 'Channel Topic'];
-	return `Find Channel by ${info[parseInt(data.info)]}`;
+	const info = ['Emoji ID', 'Emoji Name'];
+	return `Find Emoji by ${info[parseInt(data.info)]}`;
 },
 
 //---------------------------------------------------------------------
@@ -36,7 +36,7 @@ subtitle: function(data) {
 variableStorage: function(data, varType) {
 	const type = parseInt(data.storage);
 	if(type !== varType) return;
-	return ([data.varName, 'Channel']);
+	return ([data.varName, 'Emoji']);
 },
 
 //---------------------------------------------------------------------
@@ -71,9 +71,8 @@ html: function(isEvent, data) {
 	<div style="float: left; width: 40%;">
 		Source Field:<br>
 		<select id="info" class="round">
-			<option value="0" selected>Channel ID</option>
-			<option value="1">Channel Name</option>
-			<option value="2">Channel Topic</option>
+			<option value="0" selected>Emoji ID</option>
+			<option value="1">Emoji Name</option>
 		</select>
 	</div>
 	<div style="float: right; width: 55%;">
@@ -115,27 +114,17 @@ init: function() {
 //---------------------------------------------------------------------
 
 action: function(cache) {
-	const server = cache.server;
-	if(!server || !server.channels) {
-		this.callNextAction(cache);
-		return;
-	}
 	const data = cache.actions[cache.index];
+	const bot = this.getDBM().Bot.bot;
 	const info = parseInt(data.info);
 	const find = this.evalMessage(data.find, cache);
-	const channels = server.channels.filter(function(channel) {
-		return channel.type === 'text';
-	});
 	let result;
 	switch(info) {
 		case 0:
-			result = channels.find(element => element.id === find);
+			result = bot.emojis.find(element => element.id === find);
 			break;
 		case 1:
-			result = channels.find(element => element.name === find);
-			break;
-		case 2:
-			result = channels.find(element => element.topic === find);
+			result = bot.emojis.find(element => element.name === find);
 			break;
 		default:
 			break;
@@ -144,10 +133,8 @@ action: function(cache) {
 		const storage = parseInt(data.storage);
 		const varName = this.evalMessage(data.varName, cache);
 		this.storeValue(result, storage, varName, cache);
-		this.callNextAction(cache);
-	} else {
-		this.callNextAction(cache);
 	}
+	this.callNextAction(cache);
 },
 
 //---------------------------------------------------------------------

@@ -6,7 +6,7 @@ module.exports = {
 // This is the name of the action displayed in the editor.
 //---------------------------------------------------------------------
 
-name: "Find Channel",
+name: "Create GIF",
 
 //---------------------------------------------------------------------
 // Action Section
@@ -14,7 +14,7 @@ name: "Find Channel",
 // This is the section the action will fall into.
 //---------------------------------------------------------------------
 
-section: "Channel Control",
+section: "Image Editing",
 
 //---------------------------------------------------------------------
 // Action Subtitle
@@ -23,9 +23,29 @@ section: "Channel Control",
 //---------------------------------------------------------------------
 
 subtitle: function(data) {
-	const info = ['Channel ID', 'Channel Name', 'Channel Topic'];
-	return `Find Channel by ${info[parseInt(data.info)]}`;
+	return `${data.url}`;
 },
+
+//---------------------------------------------------------------------
+	 // DBM Mods Manager Variables (Optional but nice to have!)
+	 //
+	 // These are variables that DBM Mods Manager uses to show information
+	 // about the mods for people to see in the list.
+	 //---------------------------------------------------------------------
+
+	 // Who made the mod (If not set, defaults to "DBM Mods")
+	 author: "MrGold",
+
+	 // The version of the mod (Defaults to 1.0.0)
+	 version: "1.9.4", //Added in 1.9.4
+
+	 // A short description to show on the mod line for this mod (Must be on a single line)
+	 short_description: "Creates a GIF",
+
+	 // If it depends on any other mods by name, ex: WrexMODS if the mod uses something from WrexMods
+     
+
+	 //---------------------------------------------------------------------
 
 //---------------------------------------------------------------------
 // Action Storage Function
@@ -36,7 +56,7 @@ subtitle: function(data) {
 variableStorage: function(data, varType) {
 	const type = parseInt(data.storage);
 	if(type !== varType) return;
-	return ([data.varName, 'Channel']);
+	return ([data.varName, 'GIF']);
 },
 
 //---------------------------------------------------------------------
@@ -47,7 +67,7 @@ variableStorage: function(data, varType) {
 // are also the names of the fields stored in the action's JSON data.
 //---------------------------------------------------------------------
 
-fields: ["info", "find", "storage", "varName"],
+fields: ["url", "storage", "varName"],
 
 //---------------------------------------------------------------------
 // Command HTML
@@ -68,20 +88,16 @@ fields: ["info", "find", "storage", "varName"],
 html: function(isEvent, data) {
 	return `
 <div>
-	<div style="float: left; width: 40%;">
-		Source Field:<br>
-		<select id="info" class="round">
-			<option value="0" selected>Channel ID</option>
-			<option value="1">Channel Name</option>
-			<option value="2">Channel Topic</option>
-		</select>
-	</div>
-	<div style="float: right; width: 55%;">
-		Search Value:<br>
-		<input id="find" class="round" type="text">
-	</div>
-</div><br><br><br>
-<div style="padding-top: 8px;">
+    <p>
+        <u>Mod Info:</u><br>
+	    Created by MrGold
+    </p>
+</div><br>
+<div>
+	Local/Web URL:<br>
+	<input id="url" class="round" type="text" value="resources/" style="float: left; width: 504px;">
+</div><br><br>
+<div style="padding-top: 10px;">
 	<div style="float: left; width: 35%;">
 		Store In:<br>
 		<select id="storage" class="round">
@@ -90,7 +106,7 @@ html: function(isEvent, data) {
 	</div>
 	<div id="varNameContainer" style="float: right; width: 60%;">
 		Variable Name:<br>
-		<input id="varName" class="round" type="text">
+		<input id="varName" class="round" type="text"><br>
 	</div>
 </div>`
 },
@@ -115,39 +131,25 @@ init: function() {
 //---------------------------------------------------------------------
 
 action: function(cache) {
-	const server = cache.server;
-	if(!server || !server.channels) {
-		this.callNextAction(cache);
-		return;
-	}
 	const data = cache.actions[cache.index];
-	const info = parseInt(data.info);
-	const find = this.evalMessage(data.find, cache);
-	const channels = server.channels.filter(function(channel) {
-		return channel.type === 'text';
-	});
-	let result;
-	switch(info) {
-		case 0:
-			result = channels.find(element => element.id === find);
-			break;
-		case 1:
-			result = channels.find(element => element.name === find);
-			break;
-		case 2:
-			result = channels.find(element => element.topic === find);
-			break;
-		default:
-			break;
+	const obj = this.evalMessage(data.url, cache)
+	
+	let gif;
+	if(!obj.startsWith('http')) {
+		gif = this.getLocalFile(obj);
+    } else {
+		gif = obj;
 	}
-	if(result !== undefined) {
-		const storage = parseInt(data.storage);
-		const varName = this.evalMessage(data.varName, cache);
-		this.storeValue(result, storage, varName, cache);
+
+	if(!gif.includes('.gif')) {
+	    console.log('This isn\'t a GIF')
 		this.callNextAction(cache);
-	} else {
-		this.callNextAction(cache);
-	}
+    }
+	
+	const varName = this.evalMessage(data.varName, cache);
+	const storage = parseInt(data.storage);
+	this.storeValue(gif, storage, varName, cache);
+	this.callNextAction(cache);
 },
 
 //---------------------------------------------------------------------
